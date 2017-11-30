@@ -1,0 +1,6 @@
+abs x\ app x emp
+abs x1\ abs x2\ app x2 emp
+abs x1\ abs x2\ app x1 emp
+abs x1\ abs x2\ up x1
+abs x1\ abs x2\ app x2 (cons x1 emp)
+abs x\ abs y\ app y (cons (down (app x emp)) (kappa z\ up z))
