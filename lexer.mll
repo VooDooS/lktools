@@ -29,11 +29,13 @@ let id = ['a'-'z' '_'] (alpha | '_' | '\'' | digit)*
 let white = [' ' '\t']+
 let newline = '\r' | '\n' | "\r\n"
 
+let comment = '%'  [^ '\n' '\r']*
+
 rule read =
   parse
   |  ['\n' ' ' '\t' '\r' ';']+	{ read lexbuf }
   |  "app"	    	 	{ read lexbuf }
-  | newline  	    		{ Lexing.new_line lexbuf; read lexbuf }
+  | comment  	    		{ read lexbuf  }
   | id				{ id_or_keyword (lexeme lexbuf) }
   | "."	| "\\"			{ DOT }
   | "::"			{ CONS }
