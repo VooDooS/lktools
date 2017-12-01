@@ -1,7 +1,7 @@
 open Lexing
 
        
-let ex1 = Lk.Abs (fun v -> Lk.App(v, Lk.Empty))
+let ex1 = Ast.Abs (fun v -> Ast.App(Ast.Var(v), Ast.Var(v)))
                 
 
                   
@@ -14,5 +14,5 @@ let parse_file filename =
   let inc = open_in filename in
   parse (from_channel inc)
   
-let () = Lktools.printl (parse_file "exemples.txt") (* (parse_string "abs x. (x empty) 
+let () = Ast.printl (parse_file "exemples.txt") (* (parse_string "abs x. (x empty) 
 abs x. x empty")*)
