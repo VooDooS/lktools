@@ -10,6 +10,7 @@
 %token DOWN
 %token EMPTY
 %token CONS
+%token CONSPREF
 %token <string> IDENT
 %token DOT
 %token LEFT_BRACE
@@ -45,5 +46,7 @@ cont:
 				{ c }
   | EMPTY			{ Empty }
   | KAPPA; i=IDENT; DOT; t=term { Kappa (Lktools.build_abs t i) }
+  | CONSPREF; v = value;  c = cont
+				{ Cons(v, c) }
   | v = value; CONS; c = cont 	{ Cons(v, c) }
   ;

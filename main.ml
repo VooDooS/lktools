@@ -14,5 +14,5 @@ let parse_file filename =
   let inc = open_in filename in
   parse (from_channel inc)
   
-let () = Lktools.printl (parse_string "abs x. (x empty) 
-abs x. x empty")
+let () = Lktools.printl (parse_file "exemples.txt") (* (parse_string "abs x. (x empty) 
+abs x. x empty")*)
