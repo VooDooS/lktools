@@ -13,6 +13,10 @@ let parse_string s =
 let parse_file filename =
   let inc = open_in filename in
   parse (from_channel inc)
-  
-let () = Lktools.printl (parse_file "exemples.txt") (* (parse_string "abs x. (x empty) 
-abs x. x empty")*)
+
+let lklist = parse_file "exemples.txt"
+
+let t1 = List.hd lklist
+let t2 = List.hd (List.tl lklist)
+
+let () = Lktools.printl lklist; Printf.printf "%B" (Lktools.equal t1 t2)
