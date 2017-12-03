@@ -7,7 +7,8 @@ exception SyntaxError of string
   let id_or_keyword =
     let h = Hashtbl.create 17 in
     List.iter (fun (s, k) -> Hashtbl.add h s k)
-      [ "abs",     ABS; ] ;
+      [ "abs",     ABS;
+        "app", 	   APP ] ;
     fun s ->
       try  Hashtbl.find h s
       with Not_found -> IDENT(s)
@@ -23,8 +24,7 @@ let comment = '%'  [^ '\n' '\r']*
 
 rule read =
   parse
-  |  ['\n' ' ' '\t' '\r' ';']+	{ read lexbuf }
-  |  "app"	    	 	{ read lexbuf }
+  |  ['\n' ' ' '\t' '\r']+	{ read lexbuf }
   | comment  	    		{ read lexbuf  }
   | id				{ id_or_keyword (lexeme lexbuf) }
   | "."	| "\\"			{ DOT }

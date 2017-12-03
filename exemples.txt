@@ -1,10 +1,2 @@
-abs x\ x
-
-
-
-
-
-
-
-
-
+abs f\ abs x\ (app f x);
+abs f\ abs x\ (app f (app (app f (app x x)) (app f (app x x))));
