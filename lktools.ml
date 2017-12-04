@@ -58,9 +58,16 @@ let equal tm1 tm2 =
       
        
 let print tm =
-  let fresh = 
+  let rec fresh = 
     let i = ref 0 in
-    fun hint -> hint (* TODO *)
+    let table = Hashtbl.create 256 in
+    fun hint ->
+    try
+      let _ = Hashtbl.find table hint in
+      let n =  i := !i +1; "x" ^ string_of_int !i in
+      try let _ = Hashtbl.find table n in fresh hint
+      with Not_found -> Hashtbl.add table n n; n
+    with Not_found -> Hashtbl.add table hint hint; hint
   in
   let rec aux = function
       App(v, cont) -> "(" ^ (aux_value v) ^ " " ^ (aux_cont cont) ^ ")"

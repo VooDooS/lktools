@@ -22,16 +22,16 @@ let build_abs term ident =
       
 
 let print tm =
-  let fresh = 
+  let rec fresh = 
     let i = ref 0 in
-    let t = Hashtbl.create 256 in
+    let table = Hashtbl.create 256 in
     fun hint ->
-    try let _ = Hashtbl.find t hint in
-        (* TODO : what if hint is x2 ? *)
-        i := !i +1;
-        let var = "x" ^ string_of_int !i in
-        Hashtbl.add t var var; var
-    with Not_found -> Hashtbl.add t hint hint; hint
+    try
+      let _ = Hashtbl.find table hint in
+      let n =  i := !i +1; "x" ^ string_of_int !i in
+      try let _ = Hashtbl.find table n in fresh hint
+      with Not_found -> Hashtbl.add table n n; n
+    with Not_found -> Hashtbl.add table hint hint; hint
   in
   let rec aux = function
       App(t1, t2) -> "(" ^ (aux t1) ^ " " ^ (aux t2) ^ ")"
