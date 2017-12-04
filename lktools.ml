@@ -6,8 +6,8 @@ let build_abs term ident =
     match t with
     | App(v, c) ->
        fun x -> App ((aux_v v) x, (aux_c c) x)
-    | Abs(abs) ->
-       fun x -> Abs (fun y -> aux (abs y) x)
+    | Abs(i, abs) ->
+       fun x -> Abs (i, fun y -> aux (abs y) x)
     | Up(v) ->
        fun x -> Up ((aux_v v) x)
   and aux_v = function
@@ -20,8 +20,8 @@ let build_abs term ident =
        fun x -> Down ((aux t) x)
   and aux_c = function
     | Empty -> fun x -> Empty
-    | Kappa(abs) ->
-       fun x -> Kappa (fun y -> aux (abs y) x)
+    | Kappa(i, abs) ->
+       fun x -> Kappa (i, fun y -> aux (abs y) x)
     | Cons(v, c) ->
        fun x -> Cons((aux_v v) x, (aux_c c) x)
     
@@ -36,7 +36,7 @@ let equal tm1 tm2 =
   let rec aux tm1 tm2 =
     match tm1, tm2 with
       App(v1, c1), App(v2, c2) -> (aux_v v1 v2) && (aux_c c1 c2)
-    | Abs(abs1), Abs(abs2) ->
+    | Abs(_,abs1), Abs(_, abs2) ->
        let x = fresh () in aux (abs1 (Ident x)) (abs2 (Ident x))
     | Up(v1), Up(v2) -> aux_v v1 v2
     | _ -> false
@@ -49,7 +49,7 @@ let equal tm1 tm2 =
   and aux_c c1 c2 =
     match c1, c2 with
     | Empty, Empty -> true
-    | Kappa(abs1), Kappa(abs2) ->
+    | Kappa(_, abs1), Kappa(_, abs2) ->
        let x = fresh () in aux (abs1 (Ident x)) (abs2 (Ident x))
     | Cons(v1, c1), Cons(v2, c2) -> (aux_v v1 v2) && (aux_c c1 c2)
     | _ -> false
@@ -60,16 +60,16 @@ let equal tm1 tm2 =
 let print tm =
   let fresh = 
     let i = ref 0 in
-    fun () -> i := !i +1; "x" ^ string_of_int !i
+    fun hint -> hint (* TODO *)
   in
   let rec aux = function
       App(v, cont) -> "(" ^ (aux_value v) ^ " " ^ (aux_cont cont) ^ ")"
-    | Abs(abs) -> let id = fresh () in
+    | Abs(hint, abs) -> let id = fresh hint in
                   "λ" ^ id ^ "." ^ aux (abs (Ident id))
     | Up(v) -> "↑" ^ aux_value v
   and aux_cont = function
       Empty -> "ɛ"
-    | Kappa(kap) -> let id = fresh () in
+    | Kappa(hint, kap) -> let id = fresh hint in
                     "κ" ^ id ^ "." ^ aux (kap (Ident id))
     | Cons(v, c) -> (aux_value v) ^ "::" ^ aux_cont c
   and aux_value = function
@@ -82,6 +82,10 @@ let printl = List.iter (fun tm -> print tm; print_newline ())
 
 
 let fromLtoLK lt =
+  let fresh = 
+    let i = ref 0 in
+    fun () -> i := !i +1; "x" ^ string_of_int !i
+  in
   (* The share function does Hashconsing *)
   let share =
     let table = Hashtbl.create 256 in
@@ -95,7 +99,7 @@ let fromLtoLK lt =
        let out, cons = aux_c lt1 lt2 in
        App(out, cons)
     | Ast.Abs(hint, abs) ->
-       Abs(build_abs (aux (abs hint)) hint)
+       Abs(hint, build_abs (aux (abs hint)) hint)
     |tm -> Up(aux_v tm)
   and aux_v lt =
     match lt with
@@ -103,7 +107,7 @@ let fromLtoLK lt =
     | tm -> Down(aux tm)
   and aux_c v lt =
     match v  with
-    | Ast.Var(i) -> Ident(i), Cons(aux_v lt, Kappa(fun x -> Up x))
+    | Ast.Var(i) -> Ident(i), Cons(aux_v lt, Kappa(fresh (), fun x -> Up x))
     | Ast.App(lt1, lt2) ->
        let v', lt' = aux_c lt1 lt2 in
        v', Cons(aux_v lt, lt')
