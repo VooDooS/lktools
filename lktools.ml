@@ -88,8 +88,28 @@ let fromLtoLK lt =
     fun lkt ->
     try Hashtbl.find table lkt with
       Not_found -> Hashtbl.add table lkt lkt; lkt
-  in ()
-  (*let rec aux lt =
-    App(lt1, lt2) -> 
-    
-   *)
+  in 
+  let rec aux lt  =
+    match lt with
+    | Ast.App(lt1, lt2) ->
+       let out, cons = aux_c lt1 lt2 in
+       App(out, cons)
+    | Ast.Abs(hint, abs) ->
+       Abs(build_abs (aux (abs hint)) hint)
+    |tm -> Up(aux_v tm)
+  and aux_v lt =
+    match lt with
+    | Ast.Var(i) -> Ident(i)
+    | tm -> Down(aux tm)
+  and aux_c v lt =
+    match v  with
+    | Ast.Var(i) -> Ident(i), Cons(aux_v lt, Kappa(fun x -> Up x))
+    | Ast.App(lt1, lt2) ->
+       let v', lt' = aux_c lt1 lt2 in
+       v', Cons(aux_v lt, lt')
+    | _ -> assert false
+                            
+       
+  in
+  aux lt 
+ 

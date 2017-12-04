@@ -12,7 +12,6 @@
 %token RIGHT_BRACE
 %token EOF
 
-
 %type <Ast.tm list> inlist
 %start inlist
 

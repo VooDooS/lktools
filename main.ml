@@ -14,7 +14,9 @@ let parse_file filename =
   let inc = open_in filename in
   parse (from_channel inc)
   
-let () = Ast.printl (parse_file "exemples.txt") (* (parse_string "abs x. (x empty) 
+let list = parse_file "exemples.txt" (* (parse_string "abs x. (x empty) 
 abs x. x empty")*)
+let () = Ast.printl list
+let () = printl (List.map (fromLtoLK) list);
 
                     
