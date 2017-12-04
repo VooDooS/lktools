@@ -1,2 +1,2 @@
 abs f\ abs x\ (app f x);
-abs f\ abs x\ (app f (app (app f (app x x)) (app f (app x x))));
+abs f\ abs x\ (app (app f (app (app f x) x)) (app (app f x) x));
