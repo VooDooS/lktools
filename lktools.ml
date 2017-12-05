@@ -28,6 +28,17 @@ let build_abs term ident =
   in
   aux term
 
+let rec getLast cons = match cons with
+    Cons(_, c) -> getLast c
+  | _ -> cons
+
+let rec replaceKappa  cons kappa =
+  match cons with
+  | Kappa(_, _) -> kappa
+  | Cons(v, c) -> Cons(v, replaceKappa c kappa)
+  | _ -> failwith "No Kappa found, failed to replace"
+
+                  
 let equal tm1 tm2 =
   let fresh = 
     let i = ref 0 in
@@ -89,22 +100,62 @@ let printl = List.iter (fun tm -> print tm; print_newline ())
 
 
 let fromLtoLK lt =
-  let fresh = 
+  let rec fresh = 
     let i = ref 0 in
-    fun () -> i := !i +1; "x" ^ string_of_int !i
+    let table = Hashtbl.create 256 in
+    fun hint ->
+    match hint with
+      None ->(let n =  i := !i +1; "x" ^ string_of_int !i in
+      try let _ = Hashtbl.find table n in fresh hint
+      with Not_found -> Hashtbl.add table n n; n)
+    | Some h -> (
+    try
+      let _ = Hashtbl.find table h in fresh None
+    with Not_found -> Hashtbl.add table h h; h)
   in
+
+  
   (* The share function does Hashconsing *)
   let share =
     let table = Hashtbl.create 256 in
     fun lkt ->
     try Hashtbl.find table lkt with
       Not_found -> Hashtbl.add table lkt lkt; lkt
-  in 
+  in
+
+  
+  let rec apply_under_kappa f a =
+    match a with
+    | App(f2, c) ->
+       let rec aux_replace c =
+         match c with
+         | Kappa(hint, abs) ->
+            let fi = fresh (Some hint) in
+            (match (abs (Ident(fi))) with
+             | Up(Ident(i)) -> 
+                Kappa(hint, fun x -> App(f, Cons(x, Kappa(fi, fun x -> Up x))))
+             | App(_, _) as a -> Kappa(fi, build_abs (apply_under_kappa f a) fi)
+             | _ -> failwith "Not an app nor an up")
+      | Cons(v, c) -> Cons(v, aux_replace c)
+      | _ -> failwith "found empty while applying under kappa !"
+       in
+       App(f2, aux_replace c)
+    | _ -> failwith "App expected in apply_under_kappa"
+  in
+  
+  let rec add_before_kappa x c =
+    match c with
+    | Kappa(_,_) as k -> Cons(x, k)
+    | Cons(v, c) -> Cons(v,  add_before_kappa x c)
+    | _ -> failwith "found empty while adding before kappa !"
+  in
+  
+
+  
   let rec aux lt  =
     match lt with
     | Ast.App(lt1, lt2) ->
-       let out, cons = aux_c lt1 lt2 in
-       App(out, cons)
+       aux_app lt1 lt2
     | Ast.Abs(hint, abs) ->
        Abs(hint, build_abs (aux (abs hint)) hint)
     |tm -> Up(aux_v tm)
@@ -112,15 +163,68 @@ let fromLtoLK lt =
     match lt with
     | Ast.Var(i) -> Ident(i)
     | tm -> Down(aux tm)
-  and aux_c v lt =
-    match v  with
-    | Ast.Var(i) -> Ident(i), Cons(aux_v lt, Kappa(fresh (), fun x -> Up x))
-    | Ast.App(lt1, lt2) ->
-       let v', lt' = aux_c lt1 lt2 in
-       v', Cons(aux_v lt, lt')
-    | _ -> assert false
-                            
-       
+  and aux_app v lt =
+    (** app (app f x) x 
+        --> f x::x::Kup
+        app f (app f x)
+       --> f x::kx1.(f x1::kup))
+     *)
+    match v, lt  with
+    | Ast.Var(f), Ast.Var(x)
+      -> App(Ident(f), Cons(Ident(x), Kappa(fresh None, (fun y -> Up y))))
+    | Ast.Var(f1), Ast.App(f2, c)
+      -> let inc =  aux_app f2 c in
+         apply_under_kappa (Ident f1) inc
+                           
+    | Ast.App(f, c), Ast.Var(x)
+      -> let a =  aux_app f c in
+         (match a with
+            App(v2, c2) -> App( v2, add_before_kappa (Ident x) c2)
+          | _ -> failwith "This is not an app")
+           
+    | Ast.App(f1, c1), Ast.App(f2, c2)
+      -> let a1 =  aux_app f1 c1
+         and a2 = aux_app f2 c2 in
+         (match a1, a2 with
+            App(f1', c1'), App(f2', c2') ->
+             (
+               let k1 = getLast c1' in
+               (match k1 with
+                  Kappa (hint, abs) ->
+                   let x1 = fresh (Some hint) in
+                   let x2 = fresh None in
+                   let  a = abs (Ident x1) in
+                   (match a with
+                      App(f, kx1) -> 
+                       let lastKappa =
+                         Kappa(x2,
+                               build_abs (App(f, add_before_kappa (Ident x2) kx1))
+                                         x2
+                              )
+                       in
+                       let firstKappa =
+                         Kappa(x1,
+                               (build_abs (App(
+                                               f2',
+                                               replaceKappa c2' lastKappa
+                                             )
+                                          )
+                                          x1
+                               )
+                              )
+                       in
+
+                       App(f1', replaceKappa c2' firstKappa)
+                    | _ -> failwith "Not an app"
+                   )
+                | _ -> failwith "Looked for Kappa, found Emp"
+               )
+             )
+          | _ -> failwith "This is not an app")
+    | _, _ -> failwith "Badapp !"
+                       
+                       
   in
   aux lt 
- 
+      
+      

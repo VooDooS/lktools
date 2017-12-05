@@ -1,3 +1,10 @@
 abs f\ abs x\ (app f x);
+abs f\ abs x\ (app f (app f x));
+abs f\ abs x\ (app f (app f (app f x)));
+abs f\ abs g\ abs x\ (app f (app g (app f x)));
+abs f\ abs g\ abs x\ (app f (app f (app g x)));
+abs f\ abs g\ abs x\ (app f (app f (app g x)));
+abs f\ abs g\ abs x\ (app g (app f (app f x)));
 abs f\ abs x\ (app (app f x) x);
 abs f\ abs x\ (app (app f (app (app f x) x)) (app (app f x) x));
+abs f\ abs x\ app f (app f x);
