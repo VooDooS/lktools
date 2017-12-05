@@ -17,6 +17,8 @@ let parse_file filename =
 let list = parse_file "exemples.txt" (* (parse_string "abs x. (x empty) 
 abs x. x empty")*)
 let () = Ast.printl list
-let () = printl (List.map (fromLtoLK) list);
+let lklist = List.map (fromLtoLK) list
+let () = printl lklist
 
-                    
+let () = Export.lkTolpl lklist
+           

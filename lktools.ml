@@ -55,8 +55,8 @@ let equal tm1 tm2 =
     | _ -> false
   in
   aux tm1 tm2
-      
-       
+
+  
 let print tm =
   let rec fresh = 
     let i = ref 0 in
