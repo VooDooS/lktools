@@ -1,19 +1,6 @@
 open Lk
 
 let lkTolpl lkl =
-  let lksig = fun () ->
-    let outc = open_out "export/lk.sig" in
-    output_string outc "sig lk.
-
-kind tm, val, cont  type.
-type abs    (val -> tm) -> tm.
-type app    val -> cont -> tm.
-type up     val -> tm.
-type down   tm -> val.
-type emp    cont.
-type cons   val -> cont -> cont.
-type kappa  (val -> tm) -> cont."
-  in
 
   let rec tolpl tm =
     let rec fresh = 
@@ -43,7 +30,15 @@ type kappa  (val -> tm) -> cont."
       | Ident(s) -> s
     in aux tm
   in
-  lksig ();
 
-  let lkterms = open_out "export/lk.terms" in
-  List.iter (fun x -> output_string lkterms ((tolpl x) ^ "\n")) lkl
+
+  let make_example =
+    let counter = ref 0 in
+    fun tm ->
+    counter := !counter + 1;
+    "example " ^ (string_of_int !counter) ^ " " ^ (tolpl tm) ^ " TYPE.\n"
+    in
+
+  let lkterms = open_out "export/gen.mod" in
+  output_string lkterms "module gen.\naccumulate termrep.\n\n";
+  List.iter (fun x -> output_string lkterms (make_example x)) lkl
