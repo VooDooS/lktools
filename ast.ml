@@ -4,7 +4,7 @@ type tm =
   | Var of string
 
 
-(* This function, used by the parser bind an indent in a term *)
+(* This function, used by the parser to bind an indent in a term *)
 let build_abs term ident =
   let rec aux t =
     match t with

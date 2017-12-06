@@ -100,28 +100,32 @@ let printl = List.iter (fun tm -> print tm; print_newline ())
 
 
 let fromLtoLK lt =
+  let varTab = Hashtbl.create 256 in
   let rec fresh = 
     let i = ref 0 in
-    let table = Hashtbl.create 256 in
     fun hint ->
     match hint with
       None ->(let n =  i := !i +1; "x" ^ string_of_int !i in
-      try let _ = Hashtbl.find table n in fresh hint
-      with Not_found -> Hashtbl.add table n n; n)
+      try let _ = Hashtbl.find varTab n in fresh hint
+      with Not_found -> Hashtbl.add varTab n n; n)
     | Some h -> (
     try
-      let _ = Hashtbl.find table h in fresh None
-    with Not_found -> Hashtbl.add table h h; h)
+      let _ = Hashtbl.find varTab h in fresh None
+    with Not_found -> Hashtbl.add varTab h h; h)
+  in
+
+  let free var =
+    Hashtbl.remove varTab var
   in
 
   
   (* The share function does Hashconsing *)
-  let share =
+  (* let share =
     let table = Hashtbl.create 256 in
     fun lkt ->
     try Hashtbl.find table lkt with
       Not_found -> Hashtbl.add table lkt lkt; lkt
-  in
+  in *)
 
   
   let rec apply_under_kappa f a =
@@ -157,29 +161,45 @@ let fromLtoLK lt =
     | Ast.App(lt1, lt2) ->
        aux_app lt1 lt2
     | Ast.Abs(hint, abs) ->
-       Abs(hint, build_abs (aux (abs hint)) hint)
+       Abs(hint, build_abs (aux (free hint;abs hint)) hint)
     |tm -> Up(aux_v tm)
   and aux_v lt =
     match lt with
     | Ast.Var(i) -> Ident(i)
     | tm -> Down(aux tm)
   and aux_app v lt =
-    (** app (app f x) x 
+    (** 
+        Three important cases :
+        
+        app (app f x) x
         --> f x::x::Kup
+
         app f (app f x)
-       --> f x::kx1.(f x1::kup))
+        --> f x::kx1.(f x1::kup))
+       
+        app (app f x) (app f x) --> f x::Kx1. up x1
+                |
+                v                         v
+           f x::kx2.up x2        >      merge 
+
+        ===> f x::kx1. f x::x1::kx2.x2
      *)
     match v, lt  with
-    | Ast.Var(f), Ast.Var(x)
-      -> App(Ident(f), Cons(Ident(x), Kappa(fresh None, (fun y -> Up y))))
+    | Ast.Var(f), (Ast.Var(_) as b)
+      | Ast.Var(f), (Ast.Abs(_, _) as b)
+      -> App(Ident(f), Cons(aux_v b,
+                            Kappa(fresh None, (fun y -> Up y))))
+   
+            
     | Ast.Var(f1), Ast.App(f2, c)
       -> let inc =  aux_app f2 c in
          apply_under_kappa (Ident f1) inc
                            
-    | Ast.App(f, c), Ast.Var(x)
+    | Ast.App(f, c), (Ast.Var(_) as b)
+      | Ast.App(f, c) , (Ast.Abs(_, _) as b)
       -> let a =  aux_app f c in
          (match a with
-            App(v2, c2) -> App( v2, add_before_kappa (Ident x) c2)
+            App(v2, c2) -> App( v2, add_before_kappa (aux_v b) c2)
           | _ -> failwith "This is not an app")
            
     | Ast.App(f1, c1), Ast.App(f2, c2)
@@ -221,7 +241,7 @@ let fromLtoLK lt =
                )
              )
           | _ -> failwith "This is not an app")
-    | _, _ -> failwith "Badapp !"
+    | Ast.Abs(_), _ -> failwith "Your term is not normal"
                        
                        
   in
