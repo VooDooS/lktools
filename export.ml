@@ -33,10 +33,10 @@ let lkTolpl lkl =
 
 
   let make_example =
-    let counter = ref 0 in
+    let counter = ref 100 in
     fun tm ->
     counter := !counter + 1;
-    "example " ^ (string_of_int !counter) ^ " " ^ (tolpl tm) ^ " TYPE.\n"
+    "example " ^ (string_of_int !counter) ^ " (" ^ (tolpl tm) ^ ") TYPE.\n"
     in
 
   let lkterms = open_out "export/gen.mod" in

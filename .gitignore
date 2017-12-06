@@ -3,3 +3,5 @@ _build/
 *.native
 *.byte
 export/gen.mod
+*.lp
+*.lpo

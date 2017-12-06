@@ -23,3 +23,6 @@ debug: sanity
 # check that menhir is installed, use "opam install menhir"
 sanity:
 	which menhir
+
+run: native
+	./main.native
