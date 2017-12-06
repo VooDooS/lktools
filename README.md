@@ -25,6 +25,6 @@ and value =
 
 
 ## References :
-Nannestad, Guenot,Gustafsson : Computation in Focused Intuitionistic Logic ([HAL](https://hal.archives-ouvertes.fr/hal-01249216/))
+Nannestad, Guenot, Gustafsson : Computation in Focused Intuitionistic Logic ([HAL](https://hal.archives-ouvertes.fr/hal-01249216/))
 
 Gérard, Miller : Separating Functional Computation from Relations ([HAL](https://hal.inria.fr/hal-01615683)) 
