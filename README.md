@@ -1,4 +1,4 @@
-# A parser for LambdaKappa-calculus using menhir and OCaml
+# A toolset for lkterms using menhir and OCaml
 
 ## Basic install
 - Make sure you have `ocaml-4.02.3` and `menhir` installed, best way to do that is to use `opam`, the OCaml package manager.

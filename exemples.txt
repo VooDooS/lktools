@@ -1,44 +1,10 @@
-abs x1\ abs x2\ app x2 emp
-abs x1\ abs x3\ app x3 emp
-abs x1\ abs x2\ app x1 emp
-abs x\ app x emp
-
-abs x1\ abs x2\ up x1
-abs x1\ abs x2\ app x2 (cons x1 emp)
-abs x\ abs y\ app y (cons (down (app x emp)) (kappa z\ up z))
-
-(abs zero\ abs succ\ app zero emp)
-(abs zero\ abs succ\ app succ (cons (down (app zero emp)) emp)) 
-(abs zero\ abs succ\ app succ (cons (down (
-                                app succ (cons (down (app zero emp)) emp))) emp))
-
-% Switch to positive atoms
-(abs x\ up x)
-(abs x1\ abs x2\ up x2) 
-(abs x1\ abs x2\ up x1)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-% A different form of number based on a positive atom
-%(abs zero\ abs (succ\ up zero))
-% lambda zero lambda succ. name w = (succ zero) in w
-%(abs zero\ abs succ\ app succ (cons zero (kappa w\ up w)))
-% lambda zero lambda succ. name w = (succ zero) in zero
-%(abs zero\ abs succ\ app succ (cons zero (kappa w\ up zero)))
-
-% Examples involving a binary tree.
-% First using negative bias atom
-%(abs a\ abs f\ app a emp)
-%(abs a\ abs f\ app f (cons (down (app a emp)) (cons (down (app a emp)) emp))) 
+abs f\ abs x\ (app f x);
+abs f\ abs x\ (app f (app f x));
+abs f\ abs x\ (app f (app f (app f x)));
+abs f\ abs g\ abs x\ (app f (app g (app f x)));
+abs f\ abs g\ abs x\ (app f (app f (app g x)));
+abs f\ abs g\ abs x\ (app f (app f (app g x)));
+abs f\ abs g\ abs x\ (app g (app f (app f x)));
+abs f\ abs x\ (app (app f x) x);
+abs f\ abs x\ (app (app f (app (app f x) x)) (app (app f x) x));
+abs f\ abs x\ app f (app f x);

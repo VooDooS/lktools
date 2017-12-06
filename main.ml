@@ -1,7 +1,7 @@
 open Lexing
-
+open Lktools
        
-let ex1 = Lk.Abs (fun v -> Lk.App(v, Lk.Empty))
+let ex1 = Ast.Abs ("f", fun v -> Ast.App(Ast.Var(v), Ast.Var(v)))
                 
 
                   
@@ -13,10 +13,12 @@ let parse_string s =
 let parse_file filename =
   let inc = open_in filename in
   parse (from_channel inc)
+        
+let list = parse_file "exemples.txt" (* (parse_string "abs x. (x empty) 
+abs x. x empty")*)
+let () = Ast.printl list
+(*let () = print (fromLtoLK (List.hd list))*)
+let lklist = List.map (fromLtoLK) list
+let () = printl lklist
 
-let lklist = parse_file "exemples.txt"
-
-let t1 = List.hd lklist
-let t2 = List.hd (List.tl lklist)
-
-let () = Lktools.printl lklist; Printf.printf "%B" (Lktools.equal t1 t2)
+let () = Export.lkTolpl lklist

@@ -3,7 +3,7 @@
 OCB_FLAGS   = -cflag -w -cflag -40 -use-ocamlfind -use-menhir
 OCB = ocamlbuild $(OCB_FLAGS)
 
-all: native #byte # profile debug
+all: native byte profile debug
 
 clean:
 	$(OCB) -clean
