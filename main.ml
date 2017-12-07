@@ -19,6 +19,6 @@ abs x. x empty")*)
 let () = Ast.printl list
 (*let () = print (fromLtoLK (List.hd list))*)
 let lklist = List.map (fromLtoLK) list
-let () = printl lklist
+let () = Lk.printl lklist
 
 let () = Export.lkTolpl lklist
