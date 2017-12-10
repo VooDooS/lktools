@@ -40,7 +40,11 @@ let equal tm1 tm2 =
     | Cons(v1, c1), Cons(v2, c2) -> (aux_v v1 v2) && (aux_c c1 c2)
     | _ -> false
   in
-  aux tm1 tm2
+  match aux tm1 tm2 with
+    true -> 
+     Tools.print_debug ("Equal !"); true
+  | false -> 
+     Tools.print_debug ("Not equal !"); false
 
 
 module LKHash = Hashtbl.Make(struct
@@ -196,6 +200,7 @@ let fromLtoLK lt =
 let share lk =
   (* TODO Separate freshtools in another module *)
   let varTab = Hashtbl.create 256 in
+  let shareAssoc = ref [] in
   let rec fresh = 
     let i = ref 0 in
     fun hint ->
@@ -211,37 +216,61 @@ let share lk =
   
   (* The share function does Hashconsing to build 
      λκ-terms with maximum sharing *)
-  let shareaux =
-    let table = LKHash.create 256 in
-    fun lkt ->
+  let share_aux =
+    fun lkt hint ->
     Tools.print_debug ("Sharing : " ^ (toString lkt));
-    try Some(LKHash.find table lkt);
+    match Myassoc.find !shareAssoc equal lkt with
+      None ->
+       let id = fresh (Some(hint)) in
+       Tools.print_debug ("Not found");
+       shareAssoc := Myassoc.add !shareAssoc equal lkt id;
+       id, false
+    | Some(id') -> id', true
+    (*try Some(LKHash.find table lkt);
     with
     | Not_found ->
        let id = fresh None in
        Tools.print_debug ("Not found");
-       LKHash.add table lkt id; None
+       LKHash.add table lkt id; None *)
   in
 
-  let rec truncate = function
+  let rec split = function
     | Empty -> failwith "Truncate should not find Empty"
-    | Cons(v, c) -> let c,k = truncate c in
+    | Cons(v, c) -> let c,k = split c in
                     Cons(v, c), k
     | Kappa(h, _ ) as k -> Kappa(h, fun x -> Up x), k
   in
+
+  (* let rec ne *)
   
   let rec aux = function
     | App(v, c) ->
+       let newV = aux_v v in
+       let trunk, kapp = split c in
+       (match kapp with
+        | Kappa(hint, abs) -> (
+          let id, sharedtm = share_aux (App(newV, trunk)) hint in
+          if sharedtm then (
+            Tools.print_debug ("Replacing "^ hint ^" by "^id);
+            abs (Ident id)
+          ) else App(newV, aux_c c )
+        )
+        | _ -> failwith "Oups, waiting for Kappa..."
+       )
+       (*
        let newV  = aux_v v in
        let newC  = aux_c c in
-       let trunk, kapp  = truncate newC in
-       (match shareaux (App(newV, trunk)) with
-       | None -> App(newV, newC)
-       | Some(id) ->
+       let trunk, kapp  = split newC in
           (match kapp with
-            Kappa(hint, abs) -> abs (Ident id)
-          | _ -> failwith "Oups, waiting for Kappa...")
-       )
+             Kappa(hint, abs) ->
+             (match share_aux (App(newV, trunk)) with
+              | None -> App(newV, trunk)
+              | Some(id) -> Tools.print_debug ("Replacing "^ hint ^" by "^id);
+                            abs (Ident id)
+             )
+           | _ -> failwith "Oups, waiting for Kappa..."
+          )
+        *)
     | Abs(hint, abs) ->
        let newTerm = aux (abs (Ident(hint))) in
        let newAbs = build_abs newTerm hint  in
@@ -252,7 +281,9 @@ let share lk =
     | Down(tm) -> Down(tm)
   and aux_c = function
     | Empty -> Empty
-    | Kappa(hint, abs) -> Kappa(hint, build_abs (aux (abs (Ident hint))) hint)
+    | Kappa(hint, abs) ->
+       let fresh = fresh (Some(hint)) in
+       Kappa(hint, build_abs (aux (abs (Ident fresh))) fresh)
     | Cons(v, c) -> Cons(aux_v v, aux_c c)
   in
   Tools.print_debug ("Adding sharing to " ^ (toString lk));
