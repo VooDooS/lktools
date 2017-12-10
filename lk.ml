@@ -9,7 +9,6 @@ and cont =
 and value =
   | Ident of string
   | Down of tm
-
               
 (* This function, used by the parser bind an indent in a term *)
 let build_abs term ident =
@@ -68,8 +67,7 @@ let build_abs term ident =
   in
   aux term
 
-        
-let print tm =
+let toString tm =
   let rec fresh = 
     let i = ref 0 in
     let table = Hashtbl.create 256 in
@@ -95,6 +93,9 @@ let print tm =
       Down tm -> "↓(" ^ aux tm ^ ")"
     | Ident(s) -> s
   in
-  print_string (aux tm)
+  aux tm
+        
+let print tm =
+  print_string (toString tm)
 
 let printl = List.iter (fun tm -> print tm; print_newline ())

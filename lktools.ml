@@ -14,6 +14,7 @@ let rec replaceKappa  cons kappa =
 
                   
 let equal tm1 tm2 =
+  Tools.print_debug ("Testing: " ^ (toString tm1) ^ " and " ^ (toString tm2));
   let fresh = 
     let i = ref 0 in
     fun () -> i := !i +1; "x" ^ string_of_int !i
@@ -42,6 +43,12 @@ let equal tm1 tm2 =
   aux tm1 tm2
 
 
+module LKHash = Hashtbl.Make(struct
+  type t = tm
+  let equal = (print_string "pouet"; equal)
+  let hash = Hashtbl.hash
+end)
+
 let fromLtoLK lt =
   let varTab = Hashtbl.create 256 in
   let rec fresh = 
@@ -62,13 +69,6 @@ let fromLtoLK lt =
   in
 
   
-  (* The share function does Hashconsing *)
-  (* let share =
-    let table = Hashtbl.create 256 in
-    fun lkt ->
-    try Hashtbl.find table lkt with
-      Not_found -> Hashtbl.add table lkt lkt; lkt
-  in *)
 
   
   let rec apply_under_kappa f a =
@@ -131,8 +131,9 @@ let fromLtoLK lt =
     match v, lt  with
     | Ast.Var(f), (Ast.Var(_) as b)
       | Ast.Var(f), (Ast.Abs(_, _) as b)
-      -> App(Ident(f), Cons(aux_v b,
-                            Kappa(fresh None, (fun y -> Up y))))
+      -> let id = fresh None in
+         App(Ident(f), Cons(aux_v b,
+                            Kappa(id, (fun y -> Up y))))
    
             
     | Ast.Var(f1), Ast.App(f2, c)
@@ -185,10 +186,74 @@ let fromLtoLK lt =
                )
              )
           | _ -> failwith "This is not an app")
-    | Ast.Abs(_), _ -> failwith "Your term is not normal"
+    | Ast.Abs(_), _ -> failwith "Term is not normal"
                        
                        
   in
   aux lt 
       
       
+let share lk =
+  (* TODO Separate freshtools in another module *)
+  let varTab = Hashtbl.create 256 in
+  let rec fresh = 
+    let i = ref 0 in
+    fun hint ->
+    match hint with
+      None ->(let n =  i := !i +1; "x" ^ string_of_int !i in
+      try let _ = Hashtbl.find varTab n in fresh hint
+      with Not_found -> Hashtbl.add varTab n n; n)
+    | Some h -> (
+    try
+      let _ = Hashtbl.find varTab h in fresh None
+    with Not_found -> Hashtbl.add varTab h h; h)
+  in
+  
+  (* The share function does Hashconsing to build 
+     λκ-terms with maximum sharing *)
+  let shareaux =
+    let table = LKHash.create 256 in
+    fun lkt ->
+    Tools.print_debug ("Sharing : " ^ (toString lkt));
+    try Some(LKHash.find table lkt);
+    with
+    | Not_found ->
+       let id = fresh None in
+       Tools.print_debug ("Not found");
+       LKHash.add table lkt id; None
+  in
+
+  let rec truncate = function
+    | Empty -> failwith "Truncate should not find Empty"
+    | Cons(v, c) -> let c,k = truncate c in
+                    Cons(v, c), k
+    | Kappa(h, _ ) as k -> Kappa(h, fun x -> Up x), k
+  in
+  
+  let rec aux = function
+    | App(v, c) ->
+       let newV  = aux_v v in
+       let newC  = aux_c c in
+       let trunk, kapp  = truncate newC in
+       (match shareaux (App(newV, trunk)) with
+       | None -> App(newV, newC)
+       | Some(id) ->
+          (match kapp with
+            Kappa(hint, abs) -> abs (Ident id)
+          | _ -> failwith "Oups, waiting for Kappa...")
+       )
+    | Abs(hint, abs) ->
+       let newTerm = aux (abs (Ident(hint))) in
+       let newAbs = build_abs newTerm hint  in
+         Abs(hint, newAbs)
+    | Up(v) -> Up(v)
+  and aux_v = function
+    | Ident(s) -> Ident(s)
+    | Down(tm) -> Down(tm)
+  and aux_c = function
+    | Empty -> Empty
+    | Kappa(hint, abs) -> Kappa(hint, build_abs (aux (abs (Ident hint))) hint)
+    | Cons(v, c) -> Cons(aux_v v, aux_c c)
+  in
+  Tools.print_debug ("Adding sharing to " ^ (toString lk));
+  aux lk

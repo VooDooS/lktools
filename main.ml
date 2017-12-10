@@ -19,6 +19,19 @@ abs x. x empty")*)
 let () = Ast.printl list
 (*let () = print (fromLtoLK (List.hd list))*)
 let lklist = List.map (fromLtoLK) list
+let lksharelist = List.map (share) lklist
 let () = Lk.printl lklist
+let () = Lk.printl lksharelist
 
 let () = Export.lkTolpl lklist
+
+
+(*
+let t = LKHash.create 256
+let _ = LKHash.add t (Lk.App (Lk.Ident "f", Lk.Empty))
+
+let s = try LKHash.find t (Lk.App (Lk.Ident "f", Lk.Empty)); true with
+          Not_found -> false*)
+
+let () = if s then print_string "ok" else print_string "pasok"
+          
