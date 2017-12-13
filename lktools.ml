@@ -221,7 +221,7 @@ let share lk =
     Tools.print_debug ("Sharing : " ^ (toString lkt));
     match Myassoc.find !shareAssoc equal lkt with
       None ->
-       let id = fresh (Some(hint)) in
+       let id = hint  in
        Tools.print_debug ("Not found");
        shareAssoc := Myassoc.add !shareAssoc equal lkt id;
        id, false
@@ -244,33 +244,19 @@ let share lk =
   (* let rec ne *)
   
   let rec aux = function
-    | App(v, c) ->
-       let newV = aux_v v in
+    | App(v, c) -> let newV = aux_v v in
        let trunk, kapp = split c in
        (match kapp with
         | Kappa(hint, abs) -> (
           let id, sharedtm = share_aux (App(newV, trunk)) hint in
           if sharedtm then (
             Tools.print_debug ("Replacing "^ hint ^" by "^id);
-            abs (Ident id)
+            aux (abs (Ident id))
+          (* TODO : this probably wrong as it does not rebind id in the term *)
           ) else App(newV, aux_c c )
         )
         | _ -> failwith "Oups, waiting for Kappa..."
        )
-       (*
-       let newV  = aux_v v in
-       let newC  = aux_c c in
-       let trunk, kapp  = split newC in
-          (match kapp with
-             Kappa(hint, abs) ->
-             (match share_aux (App(newV, trunk)) with
-              | None -> App(newV, trunk)
-              | Some(id) -> Tools.print_debug ("Replacing "^ hint ^" by "^id);
-                            abs (Ident id)
-             )
-           | _ -> failwith "Oups, waiting for Kappa..."
-          )
-        *)
     | Abs(hint, abs) ->
        let newTerm = aux (abs (Ident(hint))) in
        let newAbs = build_abs newTerm hint  in

@@ -9,10 +9,10 @@ announce G :- bracket ">>" G "\n", fail.
 spy G :- (bracket ">Entering " G "\n", G, bracket ">Success  " G "\n";
           bracket ">Leaving  " G "\n", fail).
 
-asyncl A B C   :- announce (asyncl A B C).
-asyncr A B C   :- announce (asyncr A B C).
- syncl  A B C D :- announce (syncl  A B C D).
- syncr  A B C   :- announce (syncr  A B C).
+%asyncl A B C   :- announce (asyncl A B C).
+%asyncr A B C   :- announce (asyncr A B C).
+%syncl  A B C D :- announce (syncl  A B C D).
+%syncr  A B C   :- announce (syncr  A B C).
 
 % Negative formulas
 checkN (atm N) :- neg_atom N.

@@ -20,10 +20,11 @@ let () = Ast.printl list
 (*let () = print (fromLtoLK (List.hd list))*)
 let lklist = List.map (fromLtoLK) list
 let lksharelist = List.map (share) lklist
-let () = Lk.printl lklist
+let () = Lk.printl lklist; print_newline ()
+                   
 let () = Lk.printl lksharelist
 
-let () = Export.lkTolpl lklist
+let () = Export.lkTolpl lksharelist
 
 
 (*
