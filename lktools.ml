@@ -155,63 +155,64 @@ let fromLtoLK lt =
       -> let inc =  aux_app f2 c in
          let res = apply_under_kappa (Ident f1) inc
          in Tools.print_debug ("var/app :" ^ toString res); res
-                           
+                                                              
     | Ast.App(f, c), (Ast.Var(_) as b)
       | Ast.App(f, c) , (Ast.Abs(_, _) as b)
       -> let a = aux_app f c in
          let res = (match a with
-            App(v2, c2) -> App( v2, add_before_last_kappa (aux_v b) c2)
-          | _ -> failwith "This is not an app")
+                      App(v2, c2) -> App( v2, add_before_last_kappa (aux_v b) c2)
+                    | _ -> failwith "This is not an app")
          in Tools.print_debug ("app/var :" ^ toString res); res
-           
+                                                              
     | Ast.App(f1, c1), Ast.App(f2, c2)
       -> let a1 =  aux_app f1 c1
          and a2 = aux_app f2 c2 in
-         let res = (match a1, a2 with
-            App(f1', c1'), App(f2', c2') ->
-             (
-               let k1 = getLast c1' in
-               (match k1 with
-                  Kappa (hint, abs) ->
-                   let x1 = fresh (Some hint) in
-                   let x2 = fresh None in
-                   let  a = abs (Ident x1) in
-                   let lastKappa =
-                     (match a with
-                        App(f, kx1) -> 
-                         
-                         Kappa(x2,
-                               build_abs (App(
-                                              f,
-                                              add_before_last_kappa (Ident x2) kx1
-                                            )
-                                         )
-                                         x2
-                              )
-                      | Up(_) -> Cons(Ident(x1), k1)
-                      | Abs(hint, abs) -> failwith "Todo")
-                   in
-                   
-                   let firstKappa =
-                     Kappa(x1,
-                           (build_abs (App(
-                                           f1',
-                                           replaceKappa c1' lastKappa
-                                         )
-                                      )
-                                      x1
-                           )
-                          )
-                   in
-                   App(f2', replaceKappa c2' firstKappa)
-                | _ -> failwith "Looked for Kappa, found Emp"
+         let res =
+           (match a1, a2 with
+              App(f1', c1'), App(f2', c2') ->
+               (
+                 let k1 = getLast c1' in
+                 (match k1 with
+                    Kappa (hint, abs) ->
+                     let x1 = fresh (Some hint) in
+                     let x2 = fresh None in
+                     let  a = abs (Ident x1) in
+                     let lastKappa =
+                       (match a with
+                          App(f, kx1) -> 
+                           
+                           Kappa(x2,
+                                 build_abs (App(
+                                                f,
+                                                add_before_last_kappa (Ident x2) kx1
+                                              )
+                                           )
+                                           x2
+                                )
+                        | Up(_) -> Cons(Ident(x1), k1)
+                        | Abs(hint, abs) -> failwith "Todo, abs case not implemented")
+                     in
+                     
+                     let firstKappa =
+                       Kappa(x1,
+                             (build_abs (App(
+                                             f1',
+                                             replaceKappa c1' lastKappa
+                                           )
+                                        )
+                                        x1
+                             )
+                            )
+                     in
+                     App(f2', replaceKappa c2' firstKappa)
+                  | _ -> failwith "Looked for Kappa, found Emp"
+                 )
                )
-             )
-                    | _ -> failwith "This is not an app")
+            | _ -> failwith "This is not an app")
          in Tools.print_debug ("var/var :" ^ toString res); res
     | Ast.Abs(_), _ -> failwith "Term is not normal"
-                       
-                       
+                                
+                                
   in
   Tools.print_debug ("Lkization of " ^ (Ast.toString lt));
   aux lt 
