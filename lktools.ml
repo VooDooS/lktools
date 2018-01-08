@@ -48,10 +48,13 @@ let equal tm1 tm2 =
 
 
 module LKHash = Hashtbl.Make(struct
-  type t = tm
-  let equal = equal
-  let hash = Hashtbl.hash
-end)
+                              type t = tm
+                              let equal = equal
+                              let hash = Hashtbl.hash
+                            end)
+                            
+
+                            
 
 let fromLtoLK lt =
   let varTab = Hashtbl.create 256 in
@@ -60,11 +63,11 @@ let fromLtoLK lt =
     fun hint ->
     match hint with
       None ->(let n =  i := !i +1; "x" ^ string_of_int !i in
-      try let _ = Hashtbl.find varTab n in fresh hint
-      with Not_found -> Hashtbl.add varTab n n; n)
+              try let _ = Hashtbl.find varTab n in fresh hint
+              with Not_found -> Hashtbl.add varTab n n; n)
     | Some h -> (
-    try
-      let _ = Hashtbl.find varTab h in fresh None
+      try
+        let _ = Hashtbl.find varTab h in fresh None
     with Not_found -> Hashtbl.add varTab h h; h)
   in
 
@@ -72,9 +75,6 @@ let fromLtoLK lt =
     Hashtbl.remove varTab var
   in
 
-  
-
-  
   let rec apply_under_kappa f a =
        let rec aux_replace c =
          match c with
@@ -176,42 +176,44 @@ let fromLtoLK lt =
                    let x1 = fresh (Some hint) in
                    let x2 = fresh None in
                    let  a = abs (Ident x1) in
-                   (match a with
-                      App(f, kx1) -> 
-                       let lastKappa =
+                   let lastKappa =
+                     (match a with
+                        App(f, kx1) -> 
+                         
                          Kappa(x2,
                                build_abs (App(
                                               f,
-                                              add_before_first_kappa (Ident x2) kx1
+                                              add_before_last_kappa (Ident x2) kx1
                                             )
                                          )
                                          x2
                               )
-                       in
-                       let firstKappa =
-                         Kappa(x1,
-                               (build_abs (App(
-                                               f2',
-                                               replaceKappa c2' lastKappa
-                                             )
-                                          )
-                                          x1
-                               )
-                              )
-                       in
-
-                       App(f1', replaceKappa c2' firstKappa)
-                    | _ -> failwith "Not an app"
-                   )
+                      | Up(_) -> Cons(Ident(x1), k1)
+                      | Abs(hint, abs) -> failwith "Todo")
+                   in
+                   
+                   let firstKappa =
+                     Kappa(x1,
+                           (build_abs (App(
+                                           f1',
+                                           replaceKappa c1' lastKappa
+                                         )
+                                      )
+                                      x1
+                           )
+                          )
+                   in
+                   App(f2', replaceKappa c2' firstKappa)
                 | _ -> failwith "Looked for Kappa, found Emp"
                )
              )
-          | _ -> failwith "This is not an app")
+                    | _ -> failwith "This is not an app")
          in Tools.print_debug ("var/var :" ^ toString res); res
     | Ast.Abs(_), _ -> failwith "Term is not normal"
                        
                        
   in
+  Tools.print_debug ("Lkization of " ^ (Ast.toString lt));
   aux lt 
       
       

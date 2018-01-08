@@ -70,6 +70,6 @@ let toString ?(hints=true) tm =
 let print ?(hints=true) tm =
   print_string (toString tm ~hints:hints)
 
-let printl = List.iter (fun tm -> print tm; print_newline ())
+let printl = List.iteri (fun i tm -> print_int (i+1); print_string ". "; print tm; print_newline ())
 
 let kup = fun x -> Up(x)

@@ -21,7 +21,7 @@ let build_abs term ident =
   aux term
       
 
-let print tm =
+let toString tm =
   let rec fresh = 
     let i = ref 0 in
     let table = Hashtbl.create 256 in
@@ -39,6 +39,8 @@ let print tm =
                   "(λ" ^ id ^ "." ^ aux (abs (id))^ ")"
     | Var(s) -> s
   in
-  print_string (aux tm)
+  aux tm
 
-let printl = List.iter (fun tm -> print tm; print_newline ())
+let print tm =  print_string (toString tm)
+
+let printl = List.iteri (fun i tm -> print_int (i+1); print_string ". ";print tm; print_newline ())
