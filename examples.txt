@@ -1,15 +1,42 @@
-% abs f\ abs x\ (app f x);
-% abs f\ abs x\ (app f (app f x));
-% abs f\ abs x\ (app f (app f (app f x)));
-% abs f\ abs g\ abs x\ (app f (app g (app f x)));
-% abs f\ abs g\ abs x\ (app f (app f (app g x)));
-% abs f\ abs g\ abs x\ (app f (app f (app g x)));
-% abs f\ abs g\ abs x\ (app g (app f (app f x)));
-% abs f\ abs x\ (app (app f x) x);
-% abs f\ abs x\ app f (app f x);
-% f (f x x) (f x x)
+%1 f x
+abs f\ abs x\ (app f x);
+
+%2 f x x
+abs f\ abs x\ (app (app f x) x);
+
+%3 f (f x)
+abs f\ abs x\ app f (app f x);
+
+
+%4 f (f (g x))
+abs f\ abs g\ abs x\ (app f (app f (app g x)));
+
+%5 g ( f ( f x))
+abs f\ abs g\ abs x\ (app g (app f (app f x)));
+
+%6 f (f x x) (f x x)
 abs f\ abs x\ (app (app f (app (app f x) x)) (app (app f x) x));
-% f (f (x x)) x
+
+%7 f (f (x x)) x
 abs f\ abs x\ (app (app f (app (app f x) x)) x);
-% f (g x) x
+
+%8 f x (f (x x))
+abs f\ abs x\ (app (app f x) (app (app f x) x));
+
+%9f (g x) x
 abs f\ abs g\ abs x\ (app (app f (app g x)) x);
+
+%10 f (g x x) x
+abs f\ abs g\ abs x\ (app (app f (app (app g x) x)) x);
+
+%11 f (g x x) (f x x)
+abs f\ abs g\ abs x\ (app (app f (app (app g x) x)) (app (app f x) x));
+
+%12 (g x (f x x))
+abs f\ abs g\ abs x\ (app (app g x) (app (app f x) x));
+
+%13 f (g x (f x x)) x
+abs f\ abs g\ abs x\ (app (app f (app (app g x) (app (app f x) x))) x);
+
+%14 f (g x (f x x)) (f x x)
+abs f\ abs g\ abs x\ (app (app f (app (app g x) (app (app f x) x))) (app (app f x) x));
