@@ -10,7 +10,7 @@ and value =
   | Ident of string
   | Down of tm
               
-(* This function, used by the parser bind an indent in a term *)
+(* This function, used by the bind an indent in a term *)
 let build_abs term ident =
   let rec aux t =
     match t with
@@ -71,3 +71,5 @@ let print ?(hints=true) tm =
   print_string (toString tm ~hints:hints)
 
 let printl = List.iter (fun tm -> print tm; print_newline ())
+
+let kup = fun x -> Up(x)

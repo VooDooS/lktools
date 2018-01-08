@@ -49,7 +49,7 @@ let equal tm1 tm2 =
 
 module LKHash = Hashtbl.Make(struct
   type t = tm
-  let equal = (print_string "pouet"; equal)
+  let equal = equal
   let hash = Hashtbl.hash
 end)
 
@@ -76,31 +76,41 @@ let fromLtoLK lt =
 
   
   let rec apply_under_kappa f a =
-    match a with
-    | App(f2, c) ->
        let rec aux_replace c =
          match c with
          | Kappa(hint, abs) ->
             let fi = fresh (Some hint) in
             (match (abs (Ident(fi))) with
              | Up(Ident(i)) -> 
-                Kappa(hint, fun x -> App(f, Cons(x, Kappa(fi, fun x -> Up x))))
-             | App(_, _) as a -> Kappa(fi, build_abs (apply_under_kappa f a) fi)
+                Kappa(hint, fun x -> App(f, Cons(x, Kappa(fi, Lk.kup))))
+             | App(_, _) as a ->
+                Kappa(fi, build_abs (apply_under_kappa f a) fi)
              | _ -> failwith "Not an app nor an up")
       | Cons(v, c) -> Cons(v, aux_replace c)
       | _ -> failwith "found empty while applying under kappa !"
        in
-       App(f2, aux_replace c)
+    match a with
+    | App(f2, c) -> App(f2, aux_replace c)
     | _ -> failwith "App expected in apply_under_kappa"
   in
   
-  let rec add_before_kappa x c =
+  let rec add_before_first_kappa x c =
     match c with
     | Kappa(_,_) as k -> Cons(x, k)
-    | Cons(v, c) -> Cons(v,  add_before_kappa x c)
+    | Cons(v, c) -> Cons(v,  add_before_first_kappa x c)
     | _ -> failwith "found empty while adding before kappa !"
   in
   
+  let rec add_before_last_kappa x c =
+    match c with
+    | Kappa(hint, abs) as k->
+       (match (abs (Ident(hint))) with
+         App(f, c) ->
+         Kappa(hint, build_abs (App(f, add_before_last_kappa x c)) hint)
+       | _ -> Cons(x, k))
+    | Cons(v, c) -> Cons(v,  add_before_last_kappa x c)
+    | _ -> failwith "found empty while adding before kappa !"
+  in
 
   
   let rec aux lt  =
@@ -122,8 +132,8 @@ let fromLtoLK lt =
         --> f x::x::Kup
         (same with abstractions)
 
-     2. app f (app f x)
-        --> f x::kx1.(f x1::kup))
+     2. app f (app g x)
+        --> g x::kx1.(f x1::kup))
        
      3. app (app f x) (app f x) --> f x::Kx1. up x1
                 |
@@ -136,25 +146,28 @@ let fromLtoLK lt =
     | Ast.Var(f), (Ast.Var(_) as b)
       | Ast.Var(f), (Ast.Abs(_, _) as b)
       -> let id = fresh None in
-         App(Ident(f), Cons(aux_v b,
-                            Kappa(id, (fun y -> Up y))))
+         let res = App(Ident(f), Cons(aux_v b,
+                                      Kappa(id, Lk.kup)))
+         in Tools.print_debug ("var/var :" ^ toString res); res
    
             
     | Ast.Var(f1), Ast.App(f2, c)
       -> let inc =  aux_app f2 c in
-         apply_under_kappa (Ident f1) inc
+         let res = apply_under_kappa (Ident f1) inc
+         in Tools.print_debug ("var/app :" ^ toString res); res
                            
     | Ast.App(f, c), (Ast.Var(_) as b)
       | Ast.App(f, c) , (Ast.Abs(_, _) as b)
-      -> let a =  aux_app f c in
-         (match a with
-            App(v2, c2) -> App( v2, add_before_kappa (aux_v b) c2)
+      -> let a = aux_app f c in
+         let res = (match a with
+            App(v2, c2) -> App( v2, add_before_last_kappa (aux_v b) c2)
           | _ -> failwith "This is not an app")
+         in Tools.print_debug ("app/var :" ^ toString res); res
            
     | Ast.App(f1, c1), Ast.App(f2, c2)
       -> let a1 =  aux_app f1 c1
          and a2 = aux_app f2 c2 in
-         (match a1, a2 with
+         let res = (match a1, a2 with
             App(f1', c1'), App(f2', c2') ->
              (
                let k1 = getLast c1' in
@@ -167,7 +180,11 @@ let fromLtoLK lt =
                       App(f, kx1) -> 
                        let lastKappa =
                          Kappa(x2,
-                               build_abs (App(f, add_before_kappa (Ident x2) kx1))
+                               build_abs (App(
+                                              f,
+                                              add_before_first_kappa (Ident x2) kx1
+                                            )
+                                         )
                                          x2
                               )
                        in
@@ -190,6 +207,7 @@ let fromLtoLK lt =
                )
              )
           | _ -> failwith "This is not an app")
+         in Tools.print_debug ("var/var :" ^ toString res); res
     | Ast.Abs(_), _ -> failwith "Term is not normal"
                        
                        

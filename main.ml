@@ -16,12 +16,12 @@ let parse_file filename =
         
 let list = parse_file "examples.txt" (* (parse_string "abs x. (x empty) 
 abs x. x empty")*)
-let () = Ast.printl list
+let () = Ast.printl list; print_newline ()
 (*let () = print (fromLtoLK (List.hd list))*)
 let lklist = List.map (fromLtoLK) list
-let lksharelist = List.map (share) lklist
 let () = Lk.printl lklist; print_newline ()
                    
+let lksharelist = List.map (share) lklist
 let () = Lk.printl lksharelist
 
 let () = Export.lkTolpl lksharelist

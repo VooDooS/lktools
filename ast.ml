@@ -34,9 +34,9 @@ let print tm =
     with Not_found -> Hashtbl.add table hint hint; hint
   in
   let rec aux = function
-      App(t1, t2) -> "(" ^ (aux t1) ^ " " ^ (aux t2) ^ ")"
+      App(t1, t2) -> "(app " ^ (aux t1) ^ " " ^ (aux t2) ^ ")"
     | Abs(hint, abs) -> let id = fresh hint in
-                  "λ" ^ id ^ "." ^ aux (abs (id))
+                  "(λ" ^ id ^ "." ^ aux (abs (id))^ ")"
     | Var(s) -> s
   in
   print_string (aux tm)

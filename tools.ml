@@ -1,8 +1,9 @@
-let debug = true
+let debug = false
+
 
 let print_debug s =
-  print_string ("Dbg: " ^ s);
-  print_newline ()
+  if debug then begin
+      print_string ("Dbg: " ^ s);
+      print_newline ()
+    end;
 
-
-                
